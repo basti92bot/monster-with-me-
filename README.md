@@ -28,4 +28,4 @@ Push auf jedem Gerät unter Freunde oder Profil aktivieren. Auf dem iPhone in Sa
 
 Die Edge Function `mwm-push` prüft ihren eigenen Dispatcher-Token. Sie nutzt die bestehende VAPID-Identität, aber einen eigenen Dispatcher-Schlüssel sowie getrennte Abonnements und Aufträge. Private Schlüssel verbleiben in Supabase Vault. Im Frontend steht ausschließlich der öffentliche Publishable Key. Mitteilungen öffnen immer diese App und enthalten nur die zufällige Getränke-ID im Link.
 
-Version 1.0.0
+Version 1.0.1
