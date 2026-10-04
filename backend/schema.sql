@@ -9,7 +9,7 @@ create table mwm_private.profiles (
 );
 create table mwm_private.drinks (
  id uuid primary key, user_id uuid not null references mwm_private.profiles(id) on delete cascade,
- kind text not null check(kind in ('Monster Energy','Monster Ultra White','Monster Mango Loco','Monster Pipeline Punch','Monster Zero Sugar')),
+ kind text not null check(kind in ('Monster Energy','Monster Ultra White','Monster Mango Loco','Monster Pipeline Punch','Monster Zero Sugar','Monster Lando Norris','Monster Lewis Hamilton')),
  amount integer not null check(amount between 1 and 3000),
  day date not null default (now() at time zone 'Europe/Berlin')::date,
  created_at timestamptz not null default now()
@@ -57,7 +57,7 @@ begin
  if uid is null then raise exception 'Bitte anmelden.' using errcode='42501';end if;
  insert into mwm_private.profiles(id) values(uid) on conflict(id) do nothing;
  if action='drink' then
-   if coalesce(payload->>'kind','') not in ('Monster Energy','Monster Ultra White','Monster Mango Loco','Monster Pipeline Punch','Monster Zero Sugar') or coalesce(payload->>'amount','') !~ '^[0-9]{1,4}$' then raise exception 'Ungültiges Getränk oder Menge.';end if;
+   if coalesce(payload->>'kind','') not in ('Monster Energy','Monster Ultra White','Monster Mango Loco','Monster Pipeline Punch','Monster Zero Sugar','Monster Lando Norris','Monster Lewis Hamilton') or coalesce(payload->>'amount','') !~ '^[0-9]{1,4}$' then raise exception 'Ungültiges Getränk oder Menge.';end if;
    amount:=(payload->>'amount')::integer;entry:=(payload->>'id')::uuid;
    if amount<1 or amount>3000 or entry is null then raise exception 'Bitte 1 bis 3.000 ml wählen.';end if;
    if exists(select 1 from mwm_private.drinks where id=entry and user_id<>uid) then raise exception 'Eintrag gehört nicht zu dir.' using errcode='42501';end if;
@@ -105,7 +105,7 @@ grant execute on function public.mwm_state(),public.mwm_action(jsonb),public.mwm
 create extension if not exists pg_net with schema extensions;
 create extension if not exists pg_cron with schema pg_catalog;
 alter table mwm_private.drinks drop constraint drinks_kind_check;
-alter table mwm_private.drinks add constraint drinks_kind_check check(kind in ('Monster Energy','Monster Ultra White','Monster Mango Loco','Monster Pipeline Punch','Monster Zero Sugar'));
+alter table mwm_private.drinks add constraint drinks_kind_check check(kind in ('Monster Energy','Monster Ultra White','Monster Mango Loco','Monster Pipeline Punch','Monster Zero Sugar','Monster Lando Norris','Monster Lewis Hamilton'));
 create table mwm_private.push_config(singleton boolean primary key default true check(singleton),public_key text not null,private_secret uuid not null,dispatch_secret uuid not null,enabled boolean not null default false);
 create table mwm_private.push_devices(id uuid primary key default gen_random_uuid(),user_id uuid not null references mwm_private.profiles(id) on delete cascade,endpoint text not null unique,p256dh text not null,auth_key text not null,created_at timestamptz not null default now(),last_test_at timestamptz);
 create index mwm_push_devices_user on mwm_private.push_devices(user_id);
@@ -207,7 +207,7 @@ begin
  if uid is null then raise exception 'Bitte anmelden.' using errcode='42501';end if;
  insert into mwm_private.profiles(id) values(uid) on conflict(id) do nothing;
  if action='drink' then
-   if coalesce(payload->>'kind','') not in ('Monster Energy','Monster Ultra White','Monster Mango Loco','Monster Pipeline Punch','Monster Zero Sugar') or coalesce(payload->>'amount','') !~ '^[0-9]{1,4}$' then raise exception 'Ungültiges Getränk oder Menge.';end if;
+   if coalesce(payload->>'kind','') not in ('Monster Energy','Monster Ultra White','Monster Mango Loco','Monster Pipeline Punch','Monster Zero Sugar','Monster Lando Norris','Monster Lewis Hamilton') or coalesce(payload->>'amount','') !~ '^[0-9]{1,4}$' then raise exception 'Ungültiges Getränk oder Menge.';end if;
    amount:=(payload->>'amount')::integer;entry:=(payload->>'id')::uuid;
    if amount<1 or amount>3000 or entry is null then raise exception 'Bitte 1 bis 3.000 ml wählen.';end if;
    if exists(select 1 from mwm_private.drinks where id=entry and user_id<>uid) then raise exception 'Eintrag gehört nicht zu dir.' using errcode='42501';end if;

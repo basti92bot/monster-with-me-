@@ -18,12 +18,19 @@ const root=createRoot(document.getElementById('root'));
 try{
  const {default:App}=await server.ssrLoadModule('/src/monster-app.tsx');const {calls}=await server.ssrLoadModule('/tests/fixtures/supabase.ts');
  await act(async()=>root.render(React.createElement(App,{userId:'test-user'})));
- assert.equal(document.querySelector('button.big-drink').getAttribute('aria-label'),'500 Milliliter Monster Energy eintragen');assert(![...document.querySelectorAll('.drink-option')].some(e=>e.textContent==='Wasser'));
- const monster=document.querySelector('section[aria-label="Monster Energy"]');assert(monster);const choice=monster.querySelector('button');await act(async()=>choice.click());assert.equal(choice.getAttribute('aria-pressed'),'true');const drink=document.querySelector('button.big-drink');assert.equal(drink.getAttribute('aria-label'),'500 Milliliter Monster Energy eintragen');await act(async()=>drink.click());assert(calls.some(c=>c.name==='mwm_action'&&c.args.payload.kind==='Monster Energy'&&c.args.payload.amount===500));
+ assert.deepEqual([...document.querySelectorAll('.drink-option')].map(e=>e.textContent),['Monster Lando Norris','Monster Lewis Hamilton','Monster Ultra White']);
+ assert(!document.querySelector('.amount-selector'));
+ for(const option of document.querySelectorAll('.drink-option')){
+  await act(async()=>option.querySelector('button').click());
+  const kind=option.textContent;const drink=document.querySelector('button.big-drink');
+  assert.equal(drink.getAttribute('aria-label'),`500 Milliliter ${kind} eintragen`);
+  await act(async()=>drink.click());
+  assert(calls.some(c=>c.name==='mwm_action'&&c.args.payload.kind===kind&&c.args.payload.amount===500));
+ }
  assert(!document.querySelector('.location-sharing'));assert(!('location' in calls.find(c=>c.name==='mwm_action'&&c.args.payload.action==='drink').args.payload));
  await act(async()=>swListeners.message({data:{type:'mwm-drink',drinkId:'11111111-1111-4111-8111-111111111111'}}));assert.match(document.querySelector('[role="dialog"]').textContent,/Testfreund trinkt/);await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='Schließen').click());
  const profile=document.querySelector('[aria-label="Profil und Tageslimit"]');await act(async()=>profile.click());assert.equal(asked,0);const buttons=[...document.querySelectorAll('button')];const enable=buttons.find(b=>b.textContent.includes('Auf diesem Gerät aktivieren'));assert(enable&&!enable.disabled);await act(async()=>enable.click());assert.equal(asked,1);assert(calls.some(c=>c.name==='mwm_push_subscribe'));const test=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Test-Mitteilung senden'));assert(test);await act(async()=>test.click());assert(calls.some(c=>c.name==='mwm_push_test'));const off=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Auf diesem Gerät ausschalten'));await act(async()=>off.click());assert.equal(sub,null);assert(calls.some(c=>c.name==='mwm_push_unsubscribe'));
- console.log('UI passed: separate Monster section, 500 ml logging, permission only on tap, push subscription/test/disable.');
+ console.log('UI passed: three Monster flavors, 500 ml logging, permission only on tap, push subscription/test/disable.');
  const {default:DrinkPopup}=await server.ssrLoadModule('/src/drink-popup.tsx');const {notice,noticeResult}=await server.ssrLoadModule('/tests/fixtures/supabase.ts');let popupClosed=0;
  await act(async()=>root.render(React.createElement(DrinkPopup,{entryId:notice.id,onClose:()=>popupClosed++})));
  assert.match(document.querySelector('[role="dialog"]').textContent,/Testfreund trinkt/);assert.match(document.querySelector('[role="dialog"]').textContent,/Monster Energy/);assert.match(document.querySelector('[role="dialog"]').textContent,/500 ml/);assert(!document.querySelector('[role="dialog"] a'));assert(!document.querySelector('[role="dialog"]').textContent.includes('Standort'));await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='Schließen').click());assert.equal(popupClosed,1);
