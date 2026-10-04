@@ -1,0 +1,3 @@
+
+[functions.mwm-push]
+verify_jwt = false

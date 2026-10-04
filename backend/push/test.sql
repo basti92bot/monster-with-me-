@@ -1,0 +1,38 @@
+begin;
+do $$
+declare a uuid:=gen_random_uuid();b uuid:=gen_random_uuid();c uuid:=gen_random_uuid();drink uuid:=gen_random_uuid();other uuid:=gen_random_uuid();invite text;ep text:='https://web.push.apple.com/Q' || gen_random_uuid();c_ep text:='https://fcm.googleapis.com/Q'||gen_random_uuid();token text;result jsonb;job jsonb;bad boolean:=false;begin
+ if has_table_privilege('authenticated','mwm_private.push_devices','select') or has_table_privilege('authenticated','mwm_private.push_config','select') or has_function_privilege('authenticated','public.mwm_push_claim(text)','execute') or has_function_privilege('anon','public.mwm_push_subscribe(jsonb)','execute') then raise exception 'Push privilege leak';end if;
+ insert into auth.users(id,aud,role,email,raw_user_meta_data,raw_app_meta_data,created_at,updated_at) values(a,'authenticated','authenticated','push-a-'||a||'@example.invalid','{}','{}',now(),now()),(b,'authenticated','authenticated','push-b-'||b||'@example.invalid','{}','{}',now(),now()),(c,'authenticated','authenticated','push-c-'||c||'@example.invalid','{}','{}',now(),now());
+ perform set_config('request.jwt.claim.sub',a::text,true);perform public.mwm_state();perform public.mwm_action(jsonb_build_object('action','profile','name','Test A','goal',500));select p.invite into invite from mwm_private.profiles p where id=a;
+ perform set_config('request.jwt.claim.sub',b::text,true);perform public.mwm_state();perform public.mwm_action(jsonb_build_object('action','friend','code',invite));
+ perform public.mwm_push_subscribe(jsonb_build_object('endpoint',ep,'keys',jsonb_build_object('p256dh',repeat('A',87),'auth',repeat('B',22))));
+ perform public.mwm_push_subscribe(jsonb_build_object('endpoint',ep,'keys',jsonb_build_object('p256dh',repeat('A',87),'auth',repeat('B',22))));
+ if (select count(*) from mwm_private.push_devices where user_id=b)<>1 then raise exception 'Duplicate subscription';end if;
+ if not (public.mwm_push_settings(ep)->>'enabled')::boolean then raise exception 'Status failed';end if;
+ begin perform public.mwm_push_subscribe(jsonb_build_object('endpoint','https://web.push.apple.com.evil.invalid/subscription','keys',jsonb_build_object('p256dh',repeat('A',87),'auth',repeat('B',22))));raise exception 'SSRF endpoint accepted';exception when others then if sqlerrm='SSRF endpoint accepted' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',c::text,true);perform public.mwm_state();perform public.mwm_push_subscribe(jsonb_build_object('endpoint',c_ep,'keys',jsonb_build_object('p256dh',repeat('A',87),'auth',repeat('B',22))));
+ if (public.mwm_push_settings(ep)->>'enabled')::boolean then raise exception 'Subscription status leaked';end if;
+ perform public.mwm_push_unsubscribe(ep);if not exists(select 1 from mwm_private.push_devices where endpoint=ep and user_id=b) then raise exception 'Foreign subscription deleted';end if;
+ perform set_config('request.jwt.claim.sub',a::text,true);
+ perform public.mwm_action(jsonb_build_object('action','drink','id',drink,'kind','Monster Energy','amount',500));
+ perform public.mwm_action(jsonb_build_object('action','drink','id',drink,'kind','Monster Energy','amount',500));
+ if (select count(*) from mwm_private.push_jobs where drink_id=drink)<>1 then raise exception 'Duplicate push or wrong recipients';end if;
+ if exists(select 1 from mwm_private.push_jobs j join mwm_private.push_devices s on s.id=j.device_id where j.drink_id=drink and s.user_id<>b) then raise exception 'Nonfriend notified';end if;
+ perform set_config('request.jwt.claims','{"role":"service_role"}',true);select s.decrypted_secret into token from vault.decrypted_secrets s join mwm_private.push_config p on p.dispatch_secret=s.id;
+ begin perform public.mwm_push_claim(repeat('0',64));raise exception 'Wrong token accepted';exception when insufficient_privilege then null;end;
+ result:=public.mwm_push_claim(token);select value into job from jsonb_array_elements(result->'jobs') where value#>>'{payload,tag}'='mwm-'||drink;
+ if job is null or job#>>'{payload,body}'<>'Test A hat gerade 500 ml Monster Energy getrunken.' then raise exception 'Push payload incorrect';end if;
+ if exists(select 1 from jsonb_array_elements(public.mwm_push_claim(token)->'jobs') j where j->>'id'=job->>'id') then raise exception 'Lease failed';end if;
+ perform public.mwm_push_finish((job->>'id')::uuid,gen_random_uuid(),201);if not exists(select 1 from mwm_private.push_jobs where id=(job->>'id')::uuid) then raise exception 'Stale lease accepted';end if;
+ perform public.mwm_push_finish((job->>'id')::uuid,(job->>'lease')::uuid,503);if not exists(select 1 from mwm_private.push_jobs where id=(job->>'id')::uuid and lease is null) then raise exception 'Retry lost';end if;
+ update mwm_private.push_jobs set next_attempt=now() where drink_id=drink;result:=public.mwm_push_claim(token);select value into job from jsonb_array_elements(result->'jobs') where value#>>'{payload,tag}'='mwm-'||drink;perform public.mwm_push_finish((job->>'id')::uuid,(job->>'lease')::uuid,201);
+ if exists(select 1 from mwm_private.push_jobs where drink_id=drink) then raise exception 'Successful delivery not acknowledged';end if;
+ perform set_config('request.jwt.claim.sub',a::text,true);perform public.mwm_action(jsonb_build_object('action','drink','id',other,'kind','Monster Energy','amount',250));perform public.mwm_action(jsonb_build_object('action','unfriend','id',b));perform public.mwm_push_claim(token);
+ if exists(select 1 from mwm_private.push_jobs where drink_id=other) then raise exception 'Unfriend did not cancel pending push';end if;
+ perform set_config('request.jwt.claim.sub',b::text,true);perform public.mwm_push_test(ep);
+ begin perform public.mwm_push_test(ep);raise exception 'Test rate limit failed';exception when others then if sqlerrm='Test rate limit failed' then raise;end if;end;
+ perform public.mwm_push_unsubscribe(ep);if exists(select 1 from mwm_private.push_jobs j join mwm_private.push_devices s on s.id=j.device_id where s.endpoint=ep) then raise exception 'Unsubscribe did not cancel pending jobs';end if;
+ perform set_config('request.jwt.claim.sub','',true);begin perform public.mwm_push_settings('');raise exception 'Anonymous settings accepted';exception when insufficient_privilege then null;end;
+end $$;
+select 'Push tests passed: Monster, opt-in, friends only, SSRF rejection, duplicate protection, leasing, retries, unfriend, unsubscribe, test rate limit and authorization.' as result;
+rollback;

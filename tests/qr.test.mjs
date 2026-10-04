@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import QRCode from 'qrcode';
+import jsQR from 'jsqr';
+const require = createRequire(import.meta.url);
+const { PNG } = createRequire(require.resolve('qrcode'))('pngjs');
+const expected='https://basti92bot.github.io/monster-with-me-/?invite=1234567890abcdef12345678';
+const png=PNG.sync.read(await QRCode.toBuffer(expected,{width:288,margin:4,errorCorrectionLevel:'M',color:{dark:'#14253f',light:'#ffffff'}}));
+const result=jsQR(new Uint8ClampedArray(png.data),png.width,png.height);
+assert.equal(result?.data,expected);
+const invite=new URL(result.data).searchParams.get('invite');
+assert.match(invite,/^[0-9a-f]{24}$/i);
+assert.equal(new URL(result.data).pathname,'/monster-with-me-/');
+console.log('QR-Code, Einladungscode und GitHub-Pages-Pfad geprüft.');
