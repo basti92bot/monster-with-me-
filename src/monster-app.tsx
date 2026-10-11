@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import QRCode from 'qrcode';
+import {prepareCanSound} from './can-sound';
 import {supabase} from './supabase';
 import {EnergyMark,EnergyCan} from './energy-brand';
 import DrinkPopup from './drink-popup';
@@ -49,8 +50,10 @@ export default function MonsterApp({initialInvite='',userId}:{initialInvite?:str
   const n=500;
   if(logLock.current)return;
   logLock.current=true;setBusy(true);
+  const playCanSound=prepareCanSound();
   try{
    const id=crypto.randomUUID();await act({action:'drink',id,kind:k,amount:n});
+   playCanSound();
    toast.success(`${ml(n)} ${drinkLabel(k)} eingetragen`,{action:{label:'Rückgängig',onClick:()=>{void act({action:'delete',id}).catch(()=>{});}}});return{id,kind:k,amount:n};
   }finally{logLock.current=false;setBusy(false);}
  },[act]);
@@ -82,5 +85,5 @@ export default function MonsterApp({initialInvite='',userId}:{initialInvite?:str
  </Tabs>
  <Dialog open={!!modal} onOpenChange={o=>{if(!o){if(modal==='invite')clearInvitation();setModal(null);}}}><DialogContent className="app-dialog"><DialogTitle>{modal==='profile'?'Dein Profil':modal==='invite'?'Mit Freund verbinden':'Deine Runde wächst'}</DialogTitle><DialogDescription>{modal==='profile'?'Dein Name und dein persönliches Tageslimit.':modal==='invite'?'Bestätige die Verbindung zu deiner Runde.':'Lass deinen Freund den QR-Code mit seiner Handykamera scannen.'}</DialogDescription>{modal==='invite'?<div className="accept-invite">{inviteError?<p className="form-help" role="alert">{inviteError}</p>:inviteName?<><div className="avatar invite-avatar">{inviteName.slice(0,1).toUpperCase()}</div><h2>{inviteName}</h2><p className="form-help">Ihr seht gegenseitig eure Getränke und Tagesmengen.</p><button className="button primary full" disabled={busy} onClick={()=>safe(async()=>{await act({action:'friend',code:invitation});clearInvitation();setModal(null);setTab('friends');toast.success(`Mit ${inviteName} verbunden`);})}>{busy?'Verbindet…':'Verbindung bestätigen'}</button></>:<p className="form-help">Einladung wird geladen…</p>}<button className="button secondary full" onClick={()=>{clearInvitation();setModal(null);}}>Schließen</button></div>:modal==='profile'?<form onSubmit={e=>{e.preventDefault();safe(async()=>{await act({action:'profile',name,goal:Number(goal)});setModal(null);toast.success('Profil gespeichert');});}}><label className="form-label">Dein Name<input value={name} onChange={e=>setName(e.target.value)} required maxLength={30}/></label><label className="form-label">Tageslimit in ml<input type="number" min="250" max="3000" inputMode="numeric" value={goal} onChange={e=>setGoal(e.target.value)} required/></label><p className="form-help">Deinen Namen, deine Getränke und deine Tagesmenge sehen nur verknüpfte Freunde.</p><button className="button primary full" disabled={busy}>{busy?'Speichert…':'Speichern'}</button><PushSettings userId={userId}/><button type="button" className="button secondary full logout-button" onClick={()=>safe(async()=>{try{await disablePush();}finally{await supabase.auth.signOut();}})}>Abmelden</button></form>:<><div className="qr-invite">{qr?<img src={qr} width={288} height={288} alt={`QR-Code zum Verbinden mit ${data?.profile.name}`} />:qrError?<p role="alert">{qrError}</p>:<Skeleton className="h-64 w-64 rounded-2xl"/>}<strong>Scannen. Anmelden. Verbinden.</strong><p>Dein Freund meldet sich an und bestätigt die Verbindung.</p></div><div className="invite-box"><span>Alternativ: dein Einladungscode</span><code>{data?.profile.invite}</code><button className="button secondary full" onClick={copy}><Copy size={17}/>Code kopieren</button></div><p className="form-help">Wer deinen Code eingibt, wird mit dir verknüpft. Ihr seht dann gegenseitig eure Getränke und Tagesmengen.</p><form onSubmit={e=>{e.preventDefault();safe(async()=>{await act({action:'friend',code});setCode('');setModal(null);setTab('friends');toast.success('Freund hinzugefügt');});}}><label className="form-label">Code deines Freundes<input value={code} onChange={e=>setCode(e.target.value)} autoCapitalize="none" autoComplete="off" spellCheck={false} required placeholder="Einladungscode einfügen"/></label><button className="button primary full" disabled={busy||!code.trim()}>{busy?'Verknüpft…':'Freund hinzufügen'}</button></form></>}</DialogContent></Dialog>
  <DrinkPopup entryId={popupId} onClose={closePopup}/>
- <footer className="app-footer"><Zap size={13}/>Monster With Me<span>Inoffizielle Fan-App · v1.0.4</span></footer></div>;
+ <footer className="app-footer"><Zap size={13}/>Monster With Me<span>Inoffizielle Fan-App · v1.0.5</span></footer></div>;
 }
