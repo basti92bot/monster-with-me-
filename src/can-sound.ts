@@ -24,14 +24,17 @@ export function prepareCanSound(): () => void {
      const highNoise = (noise - previousNoise) * .5;
      previousNoise = noise;
      // Pull-tab click, opening pop, then escaping carbonation.
-     let value = .22 * Math.exp(-t * 95) * (Math.sin(2*Math.PI*2100*t) + .45*Math.sin(2*Math.PI*3700*t));
+     let value = .60 * Math.exp(-t * 95) * (Math.sin(2*Math.PI*2100*t) + .45*Math.sin(2*Math.PI*3700*t));
      if (t >= .065) {
       const p = t - .065;
-      value += .3 * Math.exp(-p * 75) * (highNoise + .55*Math.sin(2*Math.PI*680*p));
+      // A torn metal seal: broadband crack and short, inharmonic tab resonances.
+      // Avoid the low, hollow tone that sounds like a bottle cork.
+      value += .64 * Math.exp(-p * 60) * highNoise;
+      value += Math.exp(-p * 85) * (.17*Math.sin(2*Math.PI*1750*p) + .10*Math.sin(2*Math.PI*3190*p));
      }
      if (t >= .085) {
       const p = t - .085;
-      value += .18 * Math.min(1, p/.012) * Math.exp(-p * 8) * highNoise;
+      value += .23 * Math.min(1, p/.008) * Math.exp(-p * 10) * highNoise;
      }
      samples[i] = value * Math.min(1, (samples.length-i)/(rate*.015));
     }
