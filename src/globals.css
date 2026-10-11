@@ -37,3 +37,17 @@
   .app-tabs{position:static!important;transform:none!important;contain:none!important}
   .app-wrap{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important}
 }
+
+/* A bounded app shell keeps iOS navigation outside the scrolling content. */
+@media(max-width:760px){
+ html,body,#root{height:100%;overflow:hidden}
+ .auth-wrap{height:100dvh;overflow-y:auto}
+ .app-wrap{height:100dvh;max-height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 0!important;overflow:hidden}
+ .topbar{flex:none;margin:0 20px 10px;height:76px}
+ .app-tabs{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;overflow:hidden}
+ .app-tabs>[data-slot=tabs-content]{min-height:0;overflow-y:auto;overscroll-behavior-y:contain;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
+ .app-nav{position:static!important;order:2;flex:none;width:100%!important;max-width:100%!important;backdrop-filter:none;background:#0d130a!important}
+ .app-wrap>.app-footer{display:none}
+ .app-tabs>.loading,.app-tabs>.error-box{flex:1;min-height:0;overflow:auto}
+}
+.app-update{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:1100;width:max-content;max-width:calc(100% - 24px);padding:10px 16px;border:1px solid #a6ed19;border-radius:12px;background:#18230e;color:#edf2e5;font-size:14px;box-shadow:0 4px 20px #0008}.app-update button{margin-left:12px;border:0;border-radius:7px;background:#a6ed19;color:#142008;padding:6px 10px;font-weight:700}

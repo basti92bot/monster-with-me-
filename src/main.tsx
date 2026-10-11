@@ -14,4 +14,17 @@ function App(){
  return <main className="auth-wrap"><div className="auth-card"><div className="auth-brand"><EnergyMark className="brand-claw"/><h1>Monster With Me</h1></div><AuthForm/></div></main>;
 }
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
-if('serviceWorker' in navigator)window.addEventListener('load',()=>{void navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(()=>{});});
+if('serviceWorker' in navigator){
+ let notified=false;
+ const hadController=!!navigator.serviceWorker.controller;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{
+  if(!hadController||notified)return;
+  notified=true;
+  const notice=document.createElement('div');notice.className='app-update';notice.setAttribute('role','status');notice.append('Update verfügbar.');
+  const button=document.createElement('button');button.textContent='Neu laden';button.onclick=()=>window.location.reload();notice.append(button);document.body.append(notice);
+ });
+ window.addEventListener('load',()=>{void navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
+  const check=()=>{if(document.visibilityState==='visible')void reg.update().catch(()=>{});};
+  document.addEventListener('visibilitychange',check);window.addEventListener('online',check);check();
+ }).catch(()=>{});});
+}

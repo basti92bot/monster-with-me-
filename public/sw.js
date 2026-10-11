@@ -1,8 +1,8 @@
-const CACHE='monster-with-me-v1.0.5';
+const CACHE='monster-with-me-v1.0.6';
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('monster-with-me-')&&key!==CACHE)await caches.delete(key);await self.clients.claim();})()));
 self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==self.location.origin||!url.pathname.startsWith(new URL(self.registration.scope).pathname))return;
-if(event.request.mode==='navigate'){event.respondWith((async()=>{const cache=await caches.open(CACHE);const key=self.registration.scope;try{const response=await fetch(event.request);if(response.ok)await cache.put(key,response.clone());return response;}catch{return await cache.match(key)||new Response('Bitte mit dem Internet verbinden und Monster With Me erneut öffnen.',{headers:{'Content-Type':'text/plain;charset=utf-8'}});}})());return;}
+if(event.request.mode==='navigate'){event.respondWith((async()=>{const cache=await caches.open(CACHE);const key=self.registration.scope;try{const response=await fetch(event.request,{cache:'no-store'});if(response.ok)await cache.put(key,response.clone());return response;}catch{return await cache.match(key)||new Response('Bitte mit dem Internet verbinden und Monster With Me erneut öffnen.',{headers:{'Content-Type':'text/plain;charset=utf-8'}});}})());return;}
 if(/\.(js|css|png|svg|webmanifest)$/.test(url.pathname)){event.respondWith((async()=>{const cache=await caches.open(CACHE);const cached=await cache.match(event.request);if(cached)return cached;const response=await fetch(event.request);if(response.ok)await cache.put(event.request,response.clone());return response;})());}});
 
 self.addEventListener('push',event=>{
