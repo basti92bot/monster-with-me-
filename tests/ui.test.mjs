@@ -18,11 +18,11 @@ const root=createRoot(document.getElementById('root'));
 try{
  const {default:App}=await server.ssrLoadModule('/src/monster-app.tsx');const {calls}=await server.ssrLoadModule('/tests/fixtures/supabase.ts');
  await act(async()=>root.render(React.createElement(App,{userId:'test-user'})));
- assert.deepEqual([...document.querySelectorAll('.drink-option')].map(e=>e.textContent),['Monster Original','Monster Lando Norris','Monster Lewis Hamilton','Monster Ultra White']);
+ assert.deepEqual([...document.querySelectorAll('.drink-option')].map(e=>e.textContent),['Monster Original','Monster Lando Norris','Monster Lewis Hamilton','Monster Ultra White','Monster Rossi (The Doctor)','Monster Mango Loco']);
  assert(!document.querySelector('.amount-selector'));
  for(const option of document.querySelectorAll('.drink-option')){
   await act(async()=>option.querySelector('button').click());
-  const label=option.textContent;const kind=label==='Monster Original'?'Monster Energy':label;const drink=document.querySelector('button.big-drink');
+  const label=option.textContent;const kind=label==='Monster Original'?'Monster Energy':label==='Monster Rossi (The Doctor)'?'Monster The Doctor':label;const drink=document.querySelector('button.big-drink');
   assert.equal(drink.getAttribute('aria-label'),`500 Milliliter ${label} eintragen`);
   await act(async()=>drink.click());
   assert(calls.some(c=>c.name==='mwm_action'&&c.args.payload.kind===kind&&c.args.payload.amount===500));
@@ -30,7 +30,7 @@ try{
  assert(!document.querySelector('.location-sharing'));assert(!('location' in calls.find(c=>c.name==='mwm_action'&&c.args.payload.action==='drink').args.payload));
  await act(async()=>swListeners.message({data:{type:'mwm-drink',drinkId:'11111111-1111-4111-8111-111111111111'}}));assert.match(document.querySelector('[role="dialog"]').textContent,/Testfreund trinkt/);await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='Schließen').click());
  const profile=document.querySelector('[aria-label="Profil und Tageslimit"]');await act(async()=>profile.click());assert.equal(asked,0);const buttons=[...document.querySelectorAll('button')];const enable=buttons.find(b=>b.textContent.includes('Auf diesem Gerät aktivieren'));assert(enable&&!enable.disabled);await act(async()=>enable.click());assert.equal(asked,1);assert(calls.some(c=>c.name==='mwm_push_subscribe'));const test=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Test-Mitteilung senden'));assert(test);await act(async()=>test.click());assert(calls.some(c=>c.name==='mwm_push_test'));const off=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Auf diesem Gerät ausschalten'));await act(async()=>off.click());assert.equal(sub,null);assert(calls.some(c=>c.name==='mwm_push_unsubscribe'));
- console.log('UI passed: four Monster flavors, 500 ml logging, permission only on tap, push subscription/test/disable.');
+ console.log('UI passed: six Monster flavors, 500 ml logging, permission only on tap, push subscription/test/disable.');
  const {default:DrinkPopup}=await server.ssrLoadModule('/src/drink-popup.tsx');const {notice,noticeResult}=await server.ssrLoadModule('/tests/fixtures/supabase.ts');let popupClosed=0;
  await act(async()=>root.render(React.createElement(DrinkPopup,{entryId:notice.id,onClose:()=>popupClosed++})));
  assert.match(document.querySelector('[role="dialog"]').textContent,/Testfreund trinkt/);assert.match(document.querySelector('[role="dialog"]').textContent,/Monster Original/);assert.match(document.querySelector('[role="dialog"]').textContent,/500 ml/);assert(!document.querySelector('[role="dialog"] a'));assert(!document.querySelector('[role="dialog"]').textContent.includes('Standort'));await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='Schließen').click());assert.equal(popupClosed,1);

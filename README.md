@@ -4,8 +4,8 @@ Eigenständige Monster-Energy-Fan-App mit schwarzem Design, grünen Akzenten und
 
 ## Funktionen
 
-- Monster Lando Norris, Lewis Hamilton und Ultra White. Jede Dose zählt 500 ml.
-- Ein-Tipp-Eintrag, frei wählbare Menge, Verlauf und Wochenübersicht.
+- Monster Original, Lando Norris, Lewis Hamilton, Ultra White, Rossi (The Doctor) und Mango Loco. Jede Dose zählt 500 ml.
+- Ein-Tipp-Eintrag mit festen 500 ml, Verlauf und Wochenübersicht.
 - Persönliches Tageslimit als selbst gewählter Richtwert, keine Trinkempfehlung.
 - Bestehende Anmeldung aus RepPilot oder Water With Me.
 - Eigene Profile und Freunde per QR-Code oder Einladungscode.
@@ -28,4 +28,4 @@ Push auf jedem Gerät unter Freunde oder Profil aktivieren. Auf dem iPhone in Sa
 
 Die Edge Function `mwm-push` prüft ihren eigenen Dispatcher-Token. Sie nutzt die bestehende VAPID-Identität, aber einen eigenen Dispatcher-Schlüssel sowie getrennte Abonnements und Aufträge. Private Schlüssel verbleiben in Supabase Vault. Im Frontend steht ausschließlich der öffentliche Publishable Key. Mitteilungen öffnen immer diese App und enthalten nur die zufällige Getränke-ID im Link.
 
-Version 1.0.2
+Version 1.0.9

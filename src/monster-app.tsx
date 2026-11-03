@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
-const drinks = [{name:'Monster Original',kind:'Monster Energy',Icon:Zap},{name:'Monster Lando Norris',kind:'Monster Lando Norris',Icon:Zap},{name:'Monster Lewis Hamilton',kind:'Monster Lewis Hamilton',Icon:Zap},{name:'Monster Ultra White',kind:'Monster Ultra White',Icon:Zap}];
+const drinks = [{name:'Monster Original',kind:'Monster Energy',Icon:Zap},{name:'Monster Lando Norris',kind:'Monster Lando Norris',Icon:Zap},{name:'Monster Lewis Hamilton',kind:'Monster Lewis Hamilton',Icon:Zap},{name:'Monster Ultra White',kind:'Monster Ultra White',Icon:Zap},{name:'Monster Rossi (The Doctor)',kind:'Monster The Doctor',Icon:Zap},{name:'Monster Mango Loco',kind:'Monster Mango Loco',Icon:Zap}];
 const drinkLabel=(kind:string)=>drinks.find(d=>d.kind===kind)?.name||kind;
 type Entry={id:string;kind:string;amount:number;created_at:number;cheers:number};
 type Friend={id:string;name:string;goal:number;total:number;drink_id:string|null;kind:string|null;amount:number|null;created_at:number|null;cheered:number};
